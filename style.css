@@ -66,23 +66,28 @@ body {
   border-radius: 5px;
 }
 
+.btn-agregar,
+.btn-eliminar {
+  background-color: #007bff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  margin-left: 5px;
+}
+
+.btn-agregar:hover,
+.btn-eliminar:hover {
+  transform: scale(1.1);
+}
+
 .icono-btn {
   width: 20px;
   height: 20px;
-  object-fit: contain;
   vertical-align: middle;
 }
 
-.btn-agregar {
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
 
 
