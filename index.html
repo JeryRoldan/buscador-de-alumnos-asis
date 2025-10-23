@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Alumnos</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    
+  <header class="encabezado">
+  <img src="img/logo.png" alt="Logo del colegio" class="logo">
+  <h1 class="nombre-colegio">Colegio Asis</h1>
+</header>
+
+<h2 class="titulo-principal">Registro de Alumnos</h2>
+  <main class="contenido">
+    
+
+    <div class="buscador">
+      <input type="text" id="buscar" placeholder="Buscar alumno...">
+      <button class="btn-agregar" id="abrirModal"><i class="fas fa-plus"></i> <img src="iconos/guardar.png" alt="Agregar" class="icono-btn"> </button>
+    </div>
+
+    <table class="tabla" id="tablaAlumnos">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>Código</th>
+          <th>DNI</th>
+          <th>Apellidos y Nombres</th>
+          <th>Sexo</th>
+          <th>Fecha Nac.</th>
+          <th>Edad</th>
+          <th>Tutor</th>
+          <th>Salón</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla"></tbody>
+    </table>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-contenido">
+      <span class="cerrar" id="cerrarModal">&times;</span>
+      <h3>Agregar Alumno</h3>
+      <form id="formAlumno">
+        <input type="text" name="codigo" placeholder="Código" required>
+        <input type="text" name="dni" placeholder="DNI" required>
+        <input type="text" name="nombre" placeholder="Apellidos y Nombres" required>
+        <select name="sexo" required>
+          <option value="">Sexo</option>
+          <option value="M">Masculino</option>
+          <option value="F">Femenino</option>
+        </select>
+        <input type="date" name="fechaNac" required>
+        <input type="number" name="edad" placeholder="Edad" required>
+        <input type="text" name="tutor" placeholder="Tutor" required>
+        <input type="text" name="salon" placeholder="Salón" required>
+        <button type="submit" class="btn-guardar">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById("modal");
+    const abrirModal = document.getElementById("abrirModal");
+    const cerrarModal = document.getElementById("cerrarModal");
+    const cuerpoTabla = document.getElementById("cuerpoTabla");
+
+    abrirModal.onclick = () => modal.style.display = "block";
+    cerrarModal.onclick = () => modal.style.display = "none";
+    window.onclick = e => { if (e.target == modal) modal.style.display = "none"; };
+
+    // Cargar alumnos del CSV
+    async function cargarAlumnos() {
+      const res = await fetch("gestor.php?accion=listar");
+      const data = await res.json();
+      cuerpoTabla.innerHTML = "";
+      data.forEach((alumno, i) => {
+        cuerpoTabla.innerHTML += `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${alumno.codigo}</td>
+            <td>${alumno.dni}</td>
+            <td>${alumno.nombre}</td>
+            <td>${alumno.sexo}</td>
+            <td>${alumno.fechaNac}</td>
+            <td>${alumno.edad}</td>
+            <td>${alumno.tutor}</td>
+            <td>${alumno.salon}</td>
+            <td><button class="btn-eliminar" onclick="eliminarAlumno('${alumno.codigo}')"><i class="fas fa-trash"></i></button></td>
+          </tr>
+        `;
+      });
+    }
+
+    cargarAlumnos();
+
+    // Agregar alumno
+    document.getElementById("formAlumno").addEventListener("submit", async e => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      formData.append("accion", "agregar");
+      await fetch("gestor.php", { method: "POST", body: formData });
+      modal.style.display = "none";
+      cargarAlumnos();
+    });
+
+    // Eliminar alumno
+    async function eliminarAlumno(codigo) {
+      if (!confirm("¿Deseas eliminar este alumno?")) return;
+      const formData = new FormData();
+      formData.append("accion", "eliminar");
+      formData.append("codigo", codigo);
+      await fetch("gestor.php", { method: "POST", body: formData });
+      cargarAlumnos();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+  const inputBuscar = document.getElementById("buscar");
+  const tabla = document.getElementById("tablaAlumnos");
+  const filas = tabla.getElementsByTagName("tr");
+
+  inputBuscar.addEventListener("input", function() {
+    const filtro = this.value.toLowerCase(); // lo que escribe el usuario
+
+    // recorre las filas (saltando el encabezado)
+    for (let i = 1; i < filas.length; i++) {
+      const fila = filas[i];
+      const textoFila = fila.textContent.toLowerCase();
+
+      // si el texto de la fila contiene lo escrito, la muestra
+      if (textoFila.includes(filtro)) {
+        fila.style.display = "";
+      } else {
+        fila.style.display = "none";
+      }
+    }
+  });
+});
+
+  </script>
+</body>
+</html>
