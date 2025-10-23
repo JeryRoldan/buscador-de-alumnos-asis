@@ -1,72 +1,65 @@
 <?php
-$archivo = "Relacion_alumnos.csv";
+// Configuración de conexión SQL Server
+$server = "DESKTOP-6HNM4F3"; // Cambia por tu servidor
+$database = "alumnosdb";
 
-if (!file_exists($archivo)) {
-    file_put_contents($archivo, "N°,Código,DNI,Apellidos y Nombres,Sexo,Fecha Nac.,Edad,Tutor,Salón\n");
+try {
+    // Si estás en Windows con autenticación integrada
+    $conn = new PDO("sqlsrv:Server=$server;Database=$database", "", "");
+    
+    // Para producción o Render, usa usuario y contraseña:
+    // $conn = new PDO("sqlsrv:Server=$server;Database=$database", "usuario", "contraseña");
+
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Error al conectar a SQL Server: " . $e->getMessage());
 }
 
-function leerCSV() {
-    global $archivo;
-    $data = [];
-    if (($f = fopen($archivo, "r")) !== FALSE) {
-        fgetcsv($f); // encabezado
-        while (($row = fgetcsv($f)) !== FALSE) {
-            $data[] = [
-                "num" => $row[0],
-                "codigo" => $row[1],
-                "dni" => $row[2],
-                "nombre" => $row[3],
-                "sexo" => $row[4],
-                "fechaNac" => $row[5],
-                "edad" => $row[6],
-                "tutor" => $row[7],
-                "salon" => $row[8]
-            ];
+// Listar alumnos
+function listarAlumnos($conn) {
+    $stmt = $conn->query("SELECT * FROM Alumnos ORDER BY id");
+    $alumnos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Formatear fecha para JSON
+    foreach ($alumnos as &$row) {
+        if (!empty($row['fechaNac'])) {
+            $row['fechaNac'] = date('Y-m-d', strtotime($row['fechaNac']));
         }
-        fclose($f);
     }
-    return $data;
+
+    return $alumnos;
 }
 
-function guardarCSV($data) {
-    global $archivo;
-    $f = fopen($archivo, "w");
-    fputcsv($f, ["N°","Código","DNI","Apellidos y Nombres","Sexo","Fecha Nac.","Edad","Tutor","Salón"]);
-    foreach ($data as $i => $row) {
-        fputcsv($f, [$i + 1, $row["codigo"], $row["dni"], $row["nombre"], $row["sexo"], $row["fechaNac"], $row["edad"], $row["tutor"], $row["salon"]]);
-    }
-    fclose($f);
-}
-
-if (isset($_GET["accion"]) && $_GET["accion"] == "listar") {
+if (isset($_GET["accion"]) && $_GET["accion"] === "listar") {
     header("Content-Type: application/json");
-    echo json_encode(leerCSV());
+    echo json_encode(listarAlumnos($conn));
     exit;
 }
 
+// Agregar o eliminar alumno
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $accion = $_POST["accion"];
-    $alumnos = leerCSV();
+    $accion = $_POST["accion"] ?? '';
 
     if ($accion === "agregar") {
-        $nuevo = [
-            "codigo" => $_POST["codigo"],
-            "dni" => $_POST["dni"],
-            "nombre" => $_POST["nombre"],
-            "sexo" => $_POST["sexo"],
-            "fechaNac" => $_POST["fechaNac"],
-            "edad" => $_POST["edad"],
-            "tutor" => $_POST["tutor"],
-            "salon" => $_POST["salon"]
-        ];
-        $alumnos[] = $nuevo;
-        guardarCSV($alumnos);
+        $sql = "INSERT INTO Alumnos (codigo, dni, nombre, sexo, fechaNac, edad, tutor, salon)
+                VALUES (:codigo, :dni, :nombre, :sexo, :fechaNac, :edad, :tutor, :salon)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            ':codigo' => $_POST["codigo"],
+            ':dni' => $_POST["dni"],
+            ':nombre' => $_POST["nombre"],
+            ':sexo' => $_POST["sexo"],
+            ':fechaNac' => $_POST["fechaNac"],
+            ':edad' => $_POST["edad"],
+            ':tutor' => $_POST["tutor"],
+            ':salon' => $_POST["salon"]
+        ]);
     }
 
     if ($accion === "eliminar") {
-        $codigo = $_POST["codigo"];
-        $filtrado = array_filter($alumnos, fn($a) => $a["codigo"] != $codigo);
-        guardarCSV(array_values($filtrado));
+        $sql = "DELETE FROM Alumnos WHERE codigo = :codigo";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':codigo' => $_POST["codigo"]]);
     }
 }
 ?>
