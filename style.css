@@ -7,6 +7,14 @@ body {
   display: flex;
   flex-direction: column;
 }
+.logo1 {
+  width: 300px;
+  height: 300px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translateY(-90px);
+}
 
 .encabezado {
   background-color: #007bff;
@@ -31,13 +39,25 @@ body {
 }
 
 .titulo-principal {
-  font-size: 2em;
+  font-size: 28px;
   font-weight: bold;
-  color: #333;
-  margin: 30px 0 25px 0; /* separa más el título del encabezado y buscador */
   text-align: center;
-  position: relative;
+  text-transform: uppercase;
+
+  /* Degradado rojo */
+  background: linear-gradient(to right, #b30000, #ff4d4d);
+  background-clip: text;
+  color: transparent;
+
+  /* Reflejo debajo del texto */
+  -webkit-box-reflect: below 2px 
+      linear-gradient(transparent, rgba(0, 0, 0, 0.2));
+
+  margin-bottom: 30px;
+  letter-spacing: 1px;
 }
+
+
 
 
 /* Contenedor principal centrado y hacia abajo */
